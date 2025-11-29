@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 # --- CONFIGURATION ---
-LOC_DIR = "LOC"            # Stores history (sparse)
-BADGE_DIR = "badges"       # Stores current status (for Shields.io)
-DIAGRAM_DIR = "diagrams"   # Stores SVG graphs
+LOC_DIR = "LOC"            # Stores sparse history (full data)
+BADGE_DIR = "badges"       # Stores current status (simple JSON for Shields.io)
+DIAGRAM_DIR = "diagrams"   # Stores SVG visualizations
 DATE_FORMAT = "%Y-%m-%d"
 
 # Ensure directories exist
@@ -26,9 +26,7 @@ def run_command(cmd, cwd="."):
         return ""
 
 def format_number(lines):
-    """
-    REGRESSION PROOFING: Matches the exact bash logic for 3.5k / 1.2M
-    """
+    """Formats 12000 -> 12.0k, 1500000 -> 1.5M"""
     if lines > 1000000:
         return f"{lines / 1000000:.1f}M"
     elif lines > 1000:
@@ -42,6 +40,7 @@ def get_last_recorded_date(history):
 
 def get_daily_commits_since(repo_dir, since_date=None):
     """Returns list of (date, sha) for the last commit of every day after since_date"""
+    # %H = Hash, %cd = Commit Date
     cmd = "git log --reverse --format='%H %cd' --date=format:'%Y-%m-%d'"
     if since_date:
         cmd += f" --since='{since_date} 23:59:59'"
@@ -54,29 +53,36 @@ def get_daily_commits_since(repo_dir, since_date=None):
     for line in lines:
         parts = line.split(' ')
         if len(parts) >= 2:
-            daily_commits[parts[1]] = parts[0] # Date -> SHA
+            # Key=Date, Value=SHA. Since log is chronological, 
+            # overwriting ensures we keep the LAST commit of the day.
+            daily_commits[parts[1]] = parts[0] 
             
     return sorted(daily_commits.items())
 
 def count_lines_at_commit(repo_dir, sha=None):
     """
-    Counts lines using the find+wc method (most accurate for all languages)
+    USES TOKEI: Blazing fast, supports Typst/Rust/Modern stacks.
+    Returns: SLOC (Code only, no comments/blanks)
     """
     if sha:
         run_command(f"git checkout -q {sha}", cwd=repo_dir)
         
-    # Exclude .git directory, count all files
-    cmd = "find . -type f -not -path '*/.git/*' | xargs wc -l | tail -n 1 | awk '{print $1}'"
+    # Run Tokei, output JSON, target current dir (.)
+    # Tokei automatically ignores .git and binary files
+    cmd = "tokei --output json ."
+    
     try:
-        return int(run_command(cmd, cwd=repo_dir))
-    except:
+        output = run_command(cmd, cwd=repo_dir)
+        data = json.loads(output)
+        
+        # Tokei JSON structure has a "Total" key summing all languages
+        return int(data['Total']['code'])
+    except Exception as e:
+        # Fallback for empty repos or errors
         return 0
 
 def generate_simple_badge(repo_name, current_lines):
-    """
-    REGRESSION PROOFING: Generates the exact JSON for Shields.io
-    matches: badges/hooyuser-algebraic_geometry.json
-    """
+    """Generates the Regression-Proof JSON for Shields.io"""
     formatted = format_number(current_lines)
     filename = repo_name.replace("/", "-") + ".json"
     filepath = os.path.join(BADGE_DIR, filename)
@@ -95,7 +101,7 @@ def generate_simple_badge(repo_name, current_lines):
 def process_repo(repo_name, repo_url, token):
     print(f"\n--- Processing {repo_name} ---")
     
-    # 1. Setup History File
+    # 1. Load History
     json_filename = repo_name.replace("/", "-") + ".json"
     history_path = os.path.join(LOC_DIR, json_filename)
     
@@ -106,8 +112,9 @@ def process_repo(repo_name, repo_url, token):
 
     last_date = get_last_recorded_date(history)
     last_lines = history[-1]["lines"] if history else 0
+    print(f"   Last recorded: {last_date if last_date else 'None (Full History Mode)'}")
 
-    # 2. Clone Repo
+    # 2. Clone Repo (Full clone needed for history)
     temp_dir = "temp_repo"
     run_command("rm -rf temp_repo")
     auth_url = repo_url.replace("https://", f"https://{token}@")
@@ -117,36 +124,33 @@ def process_repo(repo_name, repo_url, token):
         print(f"!!! Failed to clone {repo_name}")
         return
 
-    # 3. Time Travel (Incremental Backfill)
+    # 3. Incremental Backfill (Time Travel)
     commits = get_daily_commits_since(temp_dir, last_date)
     changes_made = False
-    current_lines = last_lines # Default if no new commits
+    current_lines = last_lines 
 
     if commits:
         print(f"   Found {len(commits)} days to process...")
         for date, sha in commits:
             lines = count_lines_at_commit(temp_dir, sha)
-            current_lines = lines # Update current status
+            current_lines = lines # Keep tracking latest
             
-            # Sparse Logic: Only save history if changed
+            # Sparse Storage: Only save if lines changed
             if lines != last_lines:
                 history.append({"date": date, "lines": lines})
                 last_lines = lines
                 changes_made = True
     else:
-        # If no new commits, we still need current count for the badge
-        # (It might be the same as history, but we verify)
+        # If no new commits, just get current count for the badge
         current_lines = count_lines_at_commit(temp_dir, None)
 
-    # 4. Save History (If changed)
+    # 4. Save Updates
     if changes_made:
         with open(history_path, 'w') as f:
             json.dump(history, f, indent=2)
             
-    # 5. [CRITICAL] Always Generate the Simple Badge (The Regression Fix)
+    # 5. Generate Artifacts
     generate_simple_badge(repo_name, current_lines)
-
-    # 6. Generate SVG Graph
     generate_svg(repo_name, history)
     
     # Cleanup
@@ -161,19 +165,16 @@ def generate_svg(repo_name, history):
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(10, 5))
     
-    # Draw logic
+    # 'steps-post' visualizes sparse data accurately
     ax.plot(dates, lines, color='#00f2ff', linewidth=2, marker='.', markersize=0, drawstyle='steps-post')
     ax.fill_between(dates, lines, alpha=0.15, color='#00f2ff', step='post')
 
-    # Titles
-    ax.set_title(f"Lines of Code: {repo_name}", fontsize=14, fontweight='bold', color='white')
+    ax.set_title(f"Lines of Code (SLOC): {repo_name}", fontsize=14, fontweight='bold', color='white')
     ax.grid(True, linestyle='--', alpha=0.1)
     
-    # Formatting
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     plt.xticks(rotation=45)
     
-    # Save
     filename = repo_name.replace("/", "-") + ".svg"
     output_path = os.path.join(DIAGRAM_DIR, filename)
     plt.tight_layout()
@@ -181,7 +182,7 @@ def generate_svg(repo_name, history):
     plt.close()
 
 if __name__ == "__main__":
-    # Load Repos from file
+    # Load Repos from repos.txt
     repos = []
     if os.path.exists("repos.txt"):
         with open("repos.txt", "r") as f:
