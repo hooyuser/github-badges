@@ -12,3 +12,4 @@ hooyuser/Riemann_surfaces
 hooyuser/Topology
 
 hooyuser/typst_font_manager
+hooyuser/TextureNodes
