@@ -1,0 +1,54 @@
+name: Update LOC History & Diagrams
+
+on:
+  schedule:
+    # Run daily at midnight
+    - cron: "0 0 * * *" 
+  workflow_dispatch: # Allows you to trigger it manually to start the first backfill
+
+permissions:
+  contents: write
+
+jobs:
+  track-and-visualize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # Increased because first run might be slow
+    
+    steps:
+      - name: Checkout Badge Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install matplotlib seaborn
+          sudo apt-get install -y cloc
+
+      - name: Run Intelligent LOC Manager
+        env:
+          # LIST YOUR REPOS HERE
+          REPOS: >
+            hooyuser/Algebraic-Construction
+            hooyuser/algebraic_geometry
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: python scripts/loc_manager.py
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # Add new JSON data and SVGs
+          git add LOC/*.json diagrams/*.svg
+          
+          # Only commit if actual changes happened
+          if [[ `git status --porcelain` ]]; then
+            git commit -m "Update history and diagrams"
+            git push
+          else
+            echo "No changes found."
+          fi
