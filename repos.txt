@@ -13,3 +13,4 @@ hooyuser/Topology
 
 hooyuser/typst_font_manager
 hooyuser/TextureNodes
+hooyuser/blender_sdf_node_addon
