@@ -1,18 +1,17 @@
-name: Update LOC History & Diagrams
+name: Update LOC History
 
 on:
   schedule:
-    # Run daily at midnight
-    - cron: "0 0 * * *" 
-  workflow_dispatch: # Allows you to trigger it manually to start the first backfill
+    - cron: "0 0 * * *" # Runs daily at midnight
+  workflow_dispatch: # Allows manual trigger
 
 permissions:
   contents: write
 
 jobs:
-  track-and-visualize:
+  update-everything:
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # Increased because first run might be slow
+    timeout-minutes: 60 # Extended timeout for first-run backfilling of large repos
     
     steps:
       - name: Checkout Badge Repo
@@ -23,17 +22,21 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: |
           pip install matplotlib seaborn
-          sudo apt-get install -y cloc
 
-      - name: Run Intelligent LOC Manager
+      - name: Install Tokei
+        run: |
+          # Download Tokei binary (v12.1.2) - Faster than compiling Rust
+          curl -L https://github.com/XAMPPRocky/tokei/releases/download/v12.1.2/tokei-x86_64-unknown-linux-gnu.tar.gz -o tokei.tar.gz
+          tar -xf tokei.tar.gz
+          sudo mv tokei /usr/local/bin/
+          rm tokei.tar.gz
+          tokei --version
+
+      - name: Run LOC Manager
         env:
-          # LIST YOUR REPOS HERE
-          REPOS: >
-            hooyuser/Algebraic-Construction
-            hooyuser/algebraic_geometry
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: python scripts/loc_manager.py
 
@@ -42,12 +45,14 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           
-          # Add new JSON data and SVGs
-          git add LOC/*.json diagrams/*.svg
+          # Add all generated files
+          git add badges/*.json
+          git add LOC/*.json
+          git add diagrams/*.svg
           
-          # Only commit if actual changes happened
+          # Commit only if changes exist
           if [[ `git status --porcelain` ]]; then
-            git commit -m "Update history and diagrams"
+            git commit -m "Update LOC stats (Tokei)"
             git push
           else
             echo "No changes found."
