@@ -1,4 +1,4 @@
-# github-badges
+# Github Badges
 
 <h3 align="center">📊 Code Analytics</h3>
 
