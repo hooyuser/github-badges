@@ -2,9 +2,10 @@ hooyuser/Algebraic-Construction
 hooyuser/algebraic_geometry
 hooyuser/Differentiable_Manifold
 hooyuser/elliptic_curves_and_modular_forms
+hooyuser/functional_analysis
+hooyuser/machine_learning
 hooyuser/measure-theory-and-probability-theory
 hooyuser/Solution-to-Algebra-Chapter-0
 hooyuser/Stochastic-Process
 hooyuser/Riemann_surfaces
-hooyuser/functional_analysis
-
+hooyuser/Topology
