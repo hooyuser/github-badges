@@ -27,4 +27,16 @@
       </a>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/Topology">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Topology.svg" width="100%" alt="Topology Loc" />
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/functional_analysis">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-functional_analysis.svg" width="100%" alt="Functional Analysis Loc" />
+      </a>
+    </td>
+  </tr>
 </table>
