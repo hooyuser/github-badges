@@ -1,0 +1,93 @@
+name: Update All Badges
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Badge Repo
+        uses: actions/checkout@v4
+
+      - name: Install cloc
+        run: sudo apt-get install -y cloc
+
+      - name: Process Repositories
+        env:
+          # -------------------------------------------------------
+          # CONFIG: LIST YOUR REPOS HERE (Space separated)
+          # Format: username/repo-name
+          # -------------------------------------------------------
+          REPOS: >
+            hooyuser/Algebraic-Construction
+            hooyuser/algebraic_geometry
+            hooyuser/Solution-to-Algebra-Chapter-0
+            hooyuser/Riemann_surfaces
+          # -------------------------------------------------------
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # 1. Create a directory to store badge files if it doesn't exist
+          mkdir -p badges
+
+          # 2. Convert the REPOS string into an array
+          repo_list=($REPOS)
+
+          # 3. Loop through each repo
+          for repo in "${repo_list[@]}"; do
+            echo "------------------------------------------------"
+            echo "Processing: $repo"
+            
+            # Clean up previous runs
+            rm -rf temp_clone_dir
+
+            # Clone the repo (Using depth 1 to save time/bandwidth)
+            # We use the PAT token to authenticate (works for private repos too)
+            git clone --depth 1 "https://$GH_TOKEN@github.com/$repo.git" temp_clone_dir
+
+            if [ -d "temp_clone_dir" ]; then
+              # Count lines
+              LINES=$(cloc --json temp_clone_dir | jq '.SUM.code')
+              echo "Lines found: $LINES"
+
+              # Format Number (e.g. 3500 -> 3.5k)
+              if [ "$LINES" -gt 1000000 ]; then
+                FORMATTED=$(echo "scale=1; $LINES / 1000000" | bc)M
+              elif [ "$LINES" -gt 1000 ]; then
+                FORMATTED=$(echo "scale=1; $LINES / 1000" | bc)k
+              else
+                FORMATTED=$LINES
+              fi
+
+              # Generate a Safe Filename (e.g. user/repo -> user-repo.json)
+              FILENAME=$(echo $repo | tr '/' '-')
+              FILEPATH="badges/$FILENAME.json"
+
+              # Write the JSON file
+              # We write to a temporary file first to avoid JSON syntax errors
+              echo "{\"schemaVersion\": 1, \"label\": \"Lines of Code\", \"message\": \"$FORMATTED\", \"color\": \"blue\"}" > "$FILEPATH"
+              
+              echo "Saved to $FILEPATH"
+            else
+              echo "Failed to clone $repo. Check permissions or spelling."
+            fi
+          done
+          
+          # Clean up
+          rm -rf temp_clone_dir
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          git add badges/*.json
+          
+          if [[ `git status --porcelain` ]]; then
+            git commit -m "Update badge stats for multiple repos"
+            git push
+          else
+            echo "No changes to commit."
+          fi
