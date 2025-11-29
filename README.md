@@ -22,8 +22,8 @@
       </a>
     </td>
     <td align="center" width="50%">
-      <a href="https://github.com/hooyuser/Solution-to-Algebra-Chapter-0">
-        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Solution-to-Algebra-Chapter-0.svg" width="100%" alt="Algebra Sol Loc" />
+      <a href="https://github.com/hooyuser/Langlands_Program">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Langlands_Program.svg" width="100%" alt="Langlands Program Loc" />
       </a>
     </td>
   </tr>
@@ -36,6 +36,30 @@
     <td align="center" width="50%">
       <a href="https://github.com/hooyuser/functional_analysis">
         <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-functional_analysis.svg" width="100%" alt="Functional Analysis Loc" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/Stochastic-Process">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Stochastic-Process.svg" width="100%" alt="Stochastic Process Loc" />
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/Solution-to-Algebra-Chapter-0">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Solution-to-Algebra-Chapter-0.svg" width="100%" alt="Algebra Sol Loc" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/Differentiable_Manifold">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-Differentiable_Manifold.svg" width="100%" alt="Differentiable Manifold Loc" />
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/hooyuser/measure-theory-and-probability-theory">
+        <img src="https://raw.githubusercontent.com/hooyuser/github-badges/main/diagrams/hooyuser-measure-theory-and-probability-theory.svg" width="100%" alt="Measure Theory and Probability Theory Loc" />
       </a>
     </td>
   </tr>
