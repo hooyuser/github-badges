@@ -2,6 +2,7 @@ hooyuser/Algebraic-Construction
 hooyuser/algebraic_geometry
 hooyuser/Differentiable_Manifold
 hooyuser/functional_analysis
+hooyuser/Inequality
 hooyuser/Langlands_Program
 hooyuser/machine_learning
 hooyuser/measure-theory-and-probability-theory
