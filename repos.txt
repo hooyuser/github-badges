@@ -10,3 +10,5 @@ hooyuser/Solution-to-Algebra-Chapter-0
 hooyuser/Stochastic-Process
 hooyuser/Riemann_surfaces
 hooyuser/Topology
+
+hooyuser/typst_font_manager
