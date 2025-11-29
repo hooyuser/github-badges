@@ -162,23 +162,42 @@ def generate_svg(repo_name, history):
     dates = [datetime.strptime(d["date"], DATE_FORMAT) for d in history]
     lines = [d["lines"] for d in history]
 
+    # 1. Set the dark style
     plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(10, 5))
     
-    # 'steps-post' visualizes sparse data accurately
+    # 2. Define GitHub's Dark Background Color (#0d1117 is GitHub's specific dark gray)
+    GITHUB_DARK_BG = "#0d1117"
+    
+    # 3. Create Figure with that specific background color
+    fig, ax = plt.subplots(figsize=(10, 5))
+    fig.patch.set_facecolor(GITHUB_DARK_BG)
+    ax.set_facecolor(GITHUB_DARK_BG)
+    
+    # Plot Logic
     ax.plot(dates, lines, color='#00f2ff', linewidth=2, marker='.', markersize=0, drawstyle='steps-post')
     ax.fill_between(dates, lines, alpha=0.15, color='#00f2ff', step='post')
 
+    # Styling
     ax.set_title(f"Lines of Code (SLOC): {repo_name}", fontsize=14, fontweight='bold', color='white')
-    ax.grid(True, linestyle='--', alpha=0.1)
     
+    # Make the grid subtle
+    ax.grid(True, linestyle='--', alpha=0.1, color='white')
+    
+    # Remove the ugly box border (spines) to make it look cleaner
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    
+    # Date formatting
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     plt.xticks(rotation=45)
     
     filename = repo_name.replace("/", "-") + ".svg"
     output_path = os.path.join(DIAGRAM_DIR, filename)
     plt.tight_layout()
-    plt.savefig(output_path, format='svg', transparent=True)
+    
+    # 4. CRITICAL CHANGE: transparent=False
+    # We save it with the facecolor we defined above.
+    plt.savefig(output_path, format='svg', transparent=False, facecolor=fig.get_facecolor())
     plt.close()
 
 if __name__ == "__main__":
